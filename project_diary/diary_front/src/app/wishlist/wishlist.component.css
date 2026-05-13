@@ -1,0 +1,124 @@
+/* Общий контейнер */
+.wishlist-container {
+    background-color: #f9990073;
+    color: #000000;
+    padding: 2rem;
+    max-width: 700px;
+    margin: auto;
+    border-radius: 16px;
+    box-shadow: 0 0 20px rgba(255, 165, 0, 0.2);
+    font-family: 'Segoe UI', sans-serif;
+  }
+  
+  /* Заголовок */
+  .wishlist-container h2 {
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+    border-left: 9px solid #ffa011;
+    padding-left: 0.5rem;
+  }
+  
+  /* Форма */
+  .wishlist-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    background-color: #000000;
+    padding: 1rem;
+    border-radius: 22px;
+    margin-bottom: 7rem;
+  }
+  
+  .wishlist-form input,
+  .wishlist-form select {
+    padding: 0.6rem 1rem;
+    border: 1px solid #333;
+    border-radius: 8px;
+    background-color: #222;
+    color: #ffa011;
+    font-size: 1rem;
+  }
+  
+  .wishlist-form input::placeholder {
+    color: #aaa;
+  }
+  
+  .wishlist-form button {
+    background-color: #ffa011;
+    color: #111;
+    font-weight: bold;
+    padding: 0.6rem 1rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+  
+  .wishlist-form button:hover {
+    background-color: #a86500;
+  }
+  
+  /* Список */
+  .wishlist-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 1.2rem;
+  }
+  
+  .wishlist-item {
+    background-color: #1a1a1a;
+    border: 1px solid #333;
+    padding: 1rem;
+    border-radius: 12px;
+    box-shadow: 0 0 10px rgba(255, 165, 0, 0.1);
+  }
+  
+  .wishlist-item strong {
+    font-size: 1.1rem;
+    color: #ffa011;
+  }
+  
+  .wishlist-item span {
+    font-size: 0.85rem;
+    background: #2e2e2e;
+    padding: 0.2rem 0.5rem;
+    border-radius: 6px;
+    margin-left: 0.5rem;
+  }
+  
+  .wishlist-item p {
+    margin: 0.5rem 0;
+    color: #ccc;
+  }
+  
+  .wishlist-item a {
+    color: #ffa011;
+    text-decoration: underline;
+    display: inline-block;
+    margin-top: 0.5rem;
+  }
+  
+  .wishlist-item img {
+    margin-top: 0.8rem;
+    max-height: 200px;
+    width: auto;
+    border-radius: 8px;
+    border: 1px solid #444;
+  }
+  
+  .wishlist-item button {
+    background: transparent;
+    color: #f44336;
+    border: none;
+    font-weight: bold;
+    margin-top: 1rem;
+    cursor: pointer;
+    transition: color 0.3s;
+  }
+  
+  .wishlist-item button:hover {
+    color: #e53935;
+  }
+  

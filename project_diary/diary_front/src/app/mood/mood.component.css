@@ -1,0 +1,119 @@
+/* Основной контейнер */
+.mood-tracker-container {
+    padding: 6rem;
+    max-width: 90rem;
+    margin: 0 auto;
+    background: linear-gradient(to right, #ffa011, #000000);
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Заголовок */
+.mood-tracker-container h2 {
+    font-size: 6rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+    color: white;
+}
+
+/* Блок с формой ввода */
+.mood-form {
+    margin-bottom: 7rem;
+    background-color: white;
+    padding: 5rem;
+    border-radius: 5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Метки */
+.mood-form label {
+    display: block;
+    font-size: 1.125rem;
+    font-weight: 500;
+    color: #4a5568;
+}
+
+/* Поле ввода настроения */
+.mood-form input,
+.mood-form textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #1a1a1e;
+    border-radius: 0.75rem;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.3s ease;
+}
+
+/* Эффект при фокусе на полях ввода */
+.mood-form input:focus,
+.mood-form textarea:focus {
+    border-color: #1c1a2c;
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Кнопка сохранения */
+.save-mood-button {
+    background: linear-gradient(to right, #ffa011, #141725);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    margin-top: 1rem;
+    border-radius: 0.75rem;
+    font-size: 1.125rem;
+    font-weight: 600;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.save-mood-button:hover {
+    background: linear-gradient(to right, #ffa011, #333642);
+}
+
+/* Список истории настроений */
+.mood-history {
+    background-color: white;
+    padding: 1rem;
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-top: 1.5rem;
+}
+
+.mood-history li {
+    padding: 1rem 0;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 1rem;
+    color: #4a5568;
+    transition: background-color 0.2s ease;
+}
+
+.mood-history li:hover {
+    background-color: #f7fafc;
+}
+
+.mood-history .mood-date {
+    color: #252f45;
+    font-weight: 700;
+}
+
+.mood-history .mood-type {
+    color: #242841;
+    font-weight: 600;
+}
+
+.chart-container {
+  position: relative;
+  width: 100%;
+  height: 400px; /* Фиксированная высота */
+  margin-top: 2rem;
+  background-color: white;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Канвас для графика */
+#moodChart {
+  width: 100% !important;
+  height: 100% !important;
+}

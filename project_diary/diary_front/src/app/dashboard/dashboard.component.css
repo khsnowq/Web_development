@@ -1,0 +1,68 @@
+body {
+    background-color: #181545;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    color: #333;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+  
+  h2 {
+    font-size: 5rem;
+    color: #e18707;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+  
+  p {
+    font-size: 3rem;
+    margin-bottom: 30px;
+    color: #000000;
+    text-align: center;
+  }
+  
+
+  button {
+    background: linear-gradient(to right, #ff0707, #000000);
+    color: rgb(239, 238, 238);
+    padding: 0.75rem 1.5rem;
+    margin-top: 1rem;
+    border-radius: 0.75rem;
+    font-size: 1.125rem;
+    font-weight: 600;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+  .links {
+    display: flex;
+    flex-direction: column; /* Карточки идут по колонке */
+    align-items: center; /* Центрируем карточки */
+    justify-content: center;
+    gap: 20px;
+  }
+  
+  .card {
+    text-decoration: none;
+    background: linear-gradient(145deg, #ffa011, #000000);
+    color: white;
+    width: 300px;
+    padding: 60px 100px;
+    border-radius: 15px;
+    font-size: 3rem;
+    font-weight: bold;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(120deg, #000000, #ffa011);
+  }
+  

@@ -1,0 +1,28 @@
+<div class="p-4 max-w-xl mx-auto">
+    <h2 class="text-xl font-bold mb-4">Task Manager</h2>
+  
+    <div class="space-y-2 mb-4">
+      <input [(ngModel)]="newTask.name" placeholder="Название задачи" class="border p-2 w-full" />
+      <textarea [(ngModel)]="newTask.description" placeholder="Описание" class="border p-2 w-full"></textarea>
+      <input type="date" [(ngModel)]="newTask.date" class="border p-2 w-full" />
+      <select [(ngModel)]="newTask.status" class="border p-2 w-full">
+        <option value="todo">Запланировано</option>
+        <option value="done">Выполнено</option>
+      </select>
+      <button (click)="addTask()" class="bg-blue-500 text-white px-4 py-2 rounded">Добавить задачу</button>
+    </div>
+  
+    <div id="calendar"></div>
+
+  
+    <ul class="space-y-2">
+      <li *ngFor="let task of tasks" class="border p-2 flex justify-between items-start">
+        <div>
+          <p><strong>{{ task.name }}</strong> — {{ task.date }}</p>
+          <p class="text-sm text-gray-600">{{ task.status }}: {{ task.description }}</p>
+        </div>
+        <button (click)="deleteTask(task.id!)" class="text-red-500">🗑</button>
+      </li>
+    </ul>
+  </div>
+  
