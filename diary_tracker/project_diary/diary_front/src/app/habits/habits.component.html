@@ -1,0 +1,20 @@
+<h2 class="habit-title">Habit Tracker</h2>
+
+<div class="habit-form">
+  <input [(ngModel)]="newHabit.name" placeholder="Новая привычка" class="habit-input">
+  <select [(ngModel)]="newHabit.frequency" class="habit-select">
+    <option [ngValue]="null" disabled>Частота</option>
+    <option value="daily">Каждый день</option>
+    <option value="weekly">Каждую неделю</option>
+  </select>
+
+  <button (click)="addHabit()" class="habit-button">Добавить привычку</button>
+</div>
+
+<ul class="habit-list">
+  <li *ngFor="let habit of habits" class="habit-item">
+    <input type="checkbox" [checked]="habit.completed" (change)="toggleHabit(habit)" class="habit-checkbox">
+    <span class="habit-name">{{ habit.name }} ({{ habit.frequency }})</span>
+    <button (click)="deleteHabit(habit.id!)" class="delete-button">Удалить</button>
+  </li>
+</ul>

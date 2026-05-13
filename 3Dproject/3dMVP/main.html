@@ -1,0 +1,1813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Engine 3D</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Nico+Moji&display=swap" rel="stylesheet">
+<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+<style>
+:root {
+  --bg:       linear-gradient(60deg,#272686 30%,#302FA1 40%,#252582 60%);
+  --bg-deep:  linear-gradient(60deg,#272686 30%,#302FA1 40%,#252582 60%);
+  --nav:      linear-gradient(60deg,#272686 30%,#302FA1 40%,#252582 60%);
+  --accent:   #e8365d;
+  --accent2:  #ff6b9d;
+  --grad:     linear-gradient(-20deg,#302FA1 0%,#982E45 100%);
+  --grad-btn: linear-gradient(135deg,#F64D71 14%,#902D42 100%);
+  --text:     #ffffff;
+  --muted:    rgba(255,255,255,.6);
+  --r:        16px;
+  --font-logo:'Montserrat', sans-serif;
+  --font-b:   'Montserrat',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font-b);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+/* ── NAV ── */
+nav{
+  display:flex;align-items:center;padding:0 48px;height:72px;
+  background:var(--nav);gap:270px;position:sticky;top:0;z-index:200;
+  box-shadow:0 2px 24px rgba(0,0,0,.45);
+}
+
+/* LOGO — двойной слой: розовый сзади + белый спереди */
+.logo-wrap{
+  position:relative;display:inline-flex;align-items:center;
+  cursor:pointer;flex-shrink:0;
+}
+.logo-back{
+  position:absolute;top:3px;left:3px;
+  font-family:var(--font-logo);font-size:2rem;font-weight:800;
+  color:#e8365d;letter-spacing:3px;white-space:nowrap;
+  pointer-events:none;opacity:.9;
+}
+.logo-front{
+  position:relative;
+  font-family:var(--font-logo);font-size:2rem;font-weight:800;
+  color:#ffffff;letter-spacing:3px;white-space:nowrap;
+}
+
+.nav-links{display:flex;gap:100px}
+.nav-links a{color:rgba(255,255,255,.82);text-decoration:none;font-size:.88rem;font-weight:500;transition:.2s;cursor:pointer}
+.nav-links a:hover{color:var(--accent2)}
+.nav-r{margin-left:auto;display:flex;align-items:center;gap:14px}
+.s-box{display:flex;align-items:center;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:22px;padding:7px 16px;gap:8px}
+.s-box input{background:none;border:none;color:#fff;outline:none;font:500 .85rem var(--font-b);width:140px}
+.s-box input::placeholder{color:rgba(255,255,255,.45)}
+.s-icon{opacity:.7;font-size:.9rem;cursor:pointer}
+.av-wrap{display:flex;align-items:center;gap:8px;cursor:pointer;text-decoration:none;color:#fff}
+.av-wrap .av{width:38px;height:38px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;border:2px solid var(--accent)}
+.av-wrap span{font-size:.85rem;font-weight:600}
+
+/* ── PAGES ── */
+.page{display:none;animation:fadeIn .28s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── BTN ── */
+.btn{background:var(--grad-btn);color:#000000;border:none;border-radius:28px;padding:11px 28px;font:800 .92rem var(--font-b);cursor:pointer;transition:.2s;text-decoration:none;display:inline-block}
+.btn:hover{opacity:.88;transform:translateY(-1px)}
+.btn-ghost{background:transparent;color:#fff;border:2px solid rgba(255,255,255,.35);border-radius:28px;padding:9px 26px;font:500 .9rem var(--font-b);cursor:pointer;transition:.2s;text-decoration:none;display:inline-block}
+.btn-ghost:hover{border-color:#fff;background:rgba(255,255,255,.08)}
+.btn-sm{padding:8px 20px;font-size:.82rem;border-radius:22px}
+
+/* ── INPUT ── */
+.igroup{display:flex;flex-direction:column;gap:5px;margin-bottom:0}
+.igroup label{font-size:.8rem;color:rgba(255,255,255,.75);font-weight:500}
+.igroup label .req{color:#ff8fab}
+.ifield{background:#fff;border:none;border-radius:28px;padding:13px 20px;font:500 .9rem var(--font-b);color:#222;outline:none;width:100%;transition:.2s}
+.ifield:focus{box-shadow:0 0 0 3px rgba(232,54,93,.32)}
+textarea.ifield{border-radius:16px;resize:vertical;min-height:90px}
+
+/* ── TAG ── */
+.tag{border:2px solid rgba(255,255,255,.4);border-radius:24px;padding:7px 20px;font:500 .85rem var(--font-b);cursor:pointer;color:#fff;background:transparent;transition:.2s}
+.tag.active,.tag:hover{background:var(--accent);border-color:var(--accent)}
+
+/* ══════════════════════════════════════
+   HELLO PAGE
+══════════════════════════════════════ */
+#page-hello{
+  min-height:calc(100vh - 72px);display:none;
+  flex-direction:row;align-items:center;
+  padding:50px 60px 50px 80px;gap:60px;
+  position:relative;overflow:hidden;
+}
+#page-hello.active{display:flex}
+#page-hello::before{
+  content:'';position:absolute;bottom:-80px;left:40%;
+  transform:translateX(-50%);width:700px;height:350px;
+  background:radial-gradient(ellipse,rgba(80,50,200,.35),transparent 70%);
+  pointer-events:none;
+}
+
+/* left text column */
+.hello-l{flex:0 0 600px;z-index:1}
+.hello-h{
+  font-size:2.9rem;font-weight:800;line-height:1.25;margin-bottom:28px;
+  letter-spacing:-.3px;
+}
+.hello-h .brand{color:var(--accent)}
+
+/* ARROWS — двойной слой SVG */
+.hello-feats{list-style:none;display:flex;flex-direction:column;gap:16px;margin-bottom:36px}
+.hello-feats li{display:flex;align-items:center;gap:14px;font-size:.95rem;color:rgba(255,255,255,.88);font-weight:500}
+.arr-wrap{position:relative;width:30px;height:22px;flex-shrink:0}
+.arr-wrap svg{position:absolute;top:0;left:0}
+.arr-back{top:3px !important;left:3px !important}
+
+/* right images — свободный layout */
+.hello-r{
+  flex:1;position:relative;
+  height:420px;z-index:1;min-width:0;
+}
+/* img 1 — VR, верхняя левая */
+.hi-1{
+  position:absolute;top:-40%;left:20%;
+  width:52%;height:80%;
+  border-radius:20px;overflow:hidden;
+  box-shadow:0 20px 55px rgba(0,0,0,.55);
+  transform:rotate(0deg);z-index:2;
+}
+/* img 2 — 3D software, правая большая */
+.hi-2{
+  position:absolute;top:14%;right:5%;
+  width:52%;height:80%;
+  border-radius:20px;overflow:hidden;
+  box-shadow:0 20px 55px rgba(0,0,0,.6);
+  transform:rotate(.0deg);z-index:4;
+}
+/* img 3 — рука, нижняя левая, поверх */
+.hi-3{
+  position:absolute;bottom:-30%;left:0%;
+  width:52%;height:80%;
+  border-radius:20px;overflow:hidden;
+  box-shadow:0 20px 55px rgba(0,0,0,.55);
+  transform:rotate(0deg);z-index:3;
+}
+.hi-1 img,.hi-2 img,.hi-3 img{
+  width:100%;height:100%;object-fit:cover;display:block;
+}
+/* fallback если нет картинки */
+.hi-ph{
+  width:100%;height:100%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:.78rem;color:rgba(255,255,255,.3);text-align:center;
+}
+.hi-1 .hi-ph{background:linear-gradient(135deg,#1a0533,#6a00b4)}
+.hi-2 .hi-ph{background:linear-gradient(135deg,#0a0a1a,#2d2d60)}
+.hi-3 .hi-ph{background:linear-gradient(135deg,#001a33,#0055aa)}
+
+/* ══════════════════════════════════════
+   LOGIN PAGE
+══════════════════════════════════════ */
+#page-login{min-height:calc(100vh - 72px);display:none;align-items:center;justify-content:center}
+#page-login.active{display:flex}
+.auth-card{background:var(--grad);border-radius:24px;padding:44px 48px;width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.auth-title{text-align:center;font-size:1.5rem;font-weight:700;margin-bottom:26px}
+.tab-sw{display:flex;background:rgba(255,255,255,.12);border-radius:28px;padding:4px;margin-bottom:26px}
+.tab-sw button{flex:1;padding:10px;border:none;border-radius:24px;font:600 .95rem var(--font-b);cursor:pointer;color:rgba(255,255,255,.65);background:transparent;transition:.22s}
+.tab-sw button.active{background:var(--grad-btn);color:#000000}
+.form-sec{display:none;flex-direction:column;gap:16px}
+.form-sec.active{display:flex}
+.divider{text-align:center;color:rgba(255,255,255,.6);font-size:.85rem}
+.social-row{display:flex;justify-content:center;gap:14px}
+.sb{width:44px;height:44px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s}
+.sb:hover{transform:scale(1.1)}
+.sb-fb{background:#1877f2}.sb-li{background:#0a66c2}.sb-go{background:#fff}
+.sub-btn{background:var(--grad-btn);color:#0a0a0a;border:none;border-radius:28px;padding:15px;font:700 1rem var(--font-b);cursor:pointer;width:100%;transition:.2s;margin-top:4px}
+.sub-btn:hover{opacity:.88}
+
+/* ══════════════════════════════════════
+   CATALOG PAGE
+══════════════════════════════════════ */
+#page-catalog{padding:36px 48px}
+.catalog-top{display:flex;align-items:center;gap:20px;margin-bottom:26px}
+.catalog-top h2{font-size:1.35rem;font-weight:700;white-space:nowrap}
+.cat-s{flex:1;max-width:200px}
+.cats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:32px}
+.models-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:22px}
+.mc{background:#fff;border-radius:var(--r);overflow:hidden;box-shadow:0 4px 22px rgba(0,0,0,.2);transition:.22s;position:relative}
+.mc:hover{transform:translateY(-4px);box-shadow:0 14px 44px rgba(0,0,0,.38)}
+.mc-img{height:210px;background:#1a1a3e;display:flex;align-items:center;justify-content:center;font-size:4.5rem;position:relative;overflow:hidden}
+.mc-img img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+.fav-btn{position:absolute;top:11px;right:11px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.95);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1rem;transition:.2s;z-index:2}
+.fav-btn:hover{transform:scale(1.15)}
+.mc-body{padding:18px 22px 22px}
+.mc-feats{list-style:none;display:flex;flex-direction:column;gap:5px;margin-bottom:16px}
+.mc-feats li{display:flex;align-items:center;gap:7px;font-size:.85rem;color:#444;font-weight:500}
+.ck{color:var(--accent);font-size:.8rem}
+.mc-foot{display:flex;justify-content:flex-end}
+.no-results{color:var(--muted);padding:40px 0;text-align:center;font-size:1rem;grid-column:1/-1}
+.mc-body {
+  display: flex;
+  flex-direction: column;
+  height: 40%;
+}
+
+.mc-foot {
+  margin-top: auto;
+  padding-top: 16px;
+}
+
+.mc {
+  display: flex;
+  flex-direction: column;
+}
+
+.mc-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ══════════════════════════════════════
+   VIEWER PAGE
+══════════════════════════════════════ */
+#page-viewer{padding:0}
+.viewer-wrap{display:flex;height:calc(100vh - 72px)}
+.viewer-main{flex:1;position:relative;background:#111}
+model-viewer{width:100%;height:100%;background:#111 !important}
+.viewer-ctrl{position:absolute;top:14px;right:14px;display:flex;gap:8px;z-index:10}
+.ctrl-btn{background:#fff;color:#333;border:none;padding:8px 16px;border-radius:8px;font:600 .82rem var(--font-b);cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.3);transition:.15s}
+.ctrl-btn:hover{background:#f0f0f0}
+.back-btn{position:absolute;top:14px;left:14px;z-index:10;background:rgba(255,255,255,.15);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:10px;padding:8px 16px;font:500 .82rem var(--font-b);cursor:pointer;transition:.2s}
+.back-btn:hover{background:rgba(255,255,255,.25)}
+.ann-panel{width:360px;flex-shrink:0;background:var(--grad);overflow-y:auto;display:flex;flex-direction:column}
+.ann-head{padding:20px 24px 14px;border-bottom:1px solid rgba(255,255,255,.15)}
+.ann-head h3{font-size:1.05rem;font-weight:700}
+.ann-body{padding:20px 24px;flex:1;overflow-y:auto}
+.ann-num{font-size:2.8rem;font-weight:900;line-height:1;margin-bottom:10px}
+.ann-text{font-size:.88rem;line-height:1.65;color:rgba(255,255,255,.9);margin-bottom:16px}
+.ann-kp{font-size:.85rem;font-weight:700;margin-bottom:8px;color:var(--accent2)}
+.ann-list{list-style:disc;padding-left:18px;display:flex;flex-direction:column;gap:5px}
+.ann-list li{font-size:.83rem;color:rgba(255,255,255,.85)}
+.ann-thumb{margin-top:18px;border-radius:10px;overflow:hidden;background:rgba(0,0,0,.3);min-height:80px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.3);font-size:.78rem}
+.ann-tabs{display:flex;gap:0;border-top:1px solid rgba(255,255,255,.12);flex-shrink:0}
+.ann-tab{flex:1;padding:11px 6px;background:rgba(0,0,0,.25);border:none;color:rgba(255,255,255,.55);font:500 .78rem var(--font-b);cursor:pointer;transition:.18s;border-right:1px solid rgba(255,255,255,.1);text-align:center}
+.ann-tab:last-child{border-right:none}
+.ann-tab.active{background:rgba(255,255,255,.1);color:#fff}
+
+/* ══════════════════════════════════════
+   PROFILE PAGE
+══════════════════════════════════════ */
+#page-profile{padding:36px 48px}
+.profile-wrap{display:grid;grid-template-columns:300px 1fr;gap:24px}
+.p-sidebar{background:var(--grad);border-radius:var(--r);padding:28px;display:flex;flex-direction:column;gap:16px;align-items:flex-start}
+.p-avatar{width:72px;height:72px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:1.6rem;font-weight:700;border:3px solid rgba(255,255,255,.3)}
+.p-name{font-size:1rem;font-weight:700}
+.p-email{font-size:.8rem;color:rgba(255,255,255,.65)}
+.p-nav-btn{width:100%;text-align:left;background:transparent;border:2px solid rgba(255,255,255,.25);border-radius:28px;padding:11px 20px;color:#fff;font:500 .88rem var(--font-b);cursor:pointer;transition:.2s}
+.p-nav-btn:hover,.p-nav-btn.active{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.55)}
+.p-footer{margin-top:auto;display:flex;gap:18px}
+.p-footer a{font-size:.78rem;color:rgba(255,255,255,.55);cursor:pointer;text-decoration:none}
+.p-footer a:hover{color:#fff}
+.p-content{background:linear-gradient(145deg,rgba(180,30,60,.55),rgba(90,30,140,.55),rgba(20,15,140,.55));border-radius:var(--r);padding:32px 36px}
+.p-content h2{font-size:1.2rem;font-weight:700;margin-bottom:24px}
+.p-section{display:none}
+.p-section.active{display:block}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.prefs-list{display:flex;flex-direction:column;gap:12px;margin-top:8px}
+.chk-item{display:flex;align-items:center;gap:12px;font-size:.9rem;cursor:pointer;font-weight:500}
+.chk-item input{width:18px;height:18px;accent-color:var(--accent);cursor:pointer;flex-shrink:0}
+.saved-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-top:8px}
+.req-item{background:rgba(255,255,255,.07);border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:14px;margin-bottom:10px}
+.req-status{padding:4px 12px;border-radius:20px;font-size:.75rem;font-weight:600;white-space:nowrap}
+.req-status.pending{background:rgba(255,180,0,.2);color:#ffd060}
+.req-status.done{background:rgba(0,220,120,.2);color:#00e88a}
+
+/* ══════════════════════════════════════
+   REQUEST PAGE
+══════════════════════════════════════ */
+#page-request{padding:36px 48px}
+.req-wrap{display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:24px}
+.req-form-card{background:var(--grad);border-radius:var(--r);padding:32px}
+.req-form-card h3{font-size:1.05rem;font-weight:700;margin-bottom:22px}
+.req-form-grid{display:flex;flex-direction:column;gap:16px}
+.file-drop{border:2px dashed rgba(255,255,255,.3);border-radius:14px;padding:28px;text-align:center;cursor:pointer;transition:.2s;color:rgba(255,255,255,.55);font-size:.88rem}
+.file-drop:hover{border-color:rgba(255,255,255,.6);background:rgba(255,255,255,.05)}
+.file-drop input{display:none}
+.req-history h3{font-size:1.05rem;font-weight:700;margin-bottom:16px}
+
+/* ══════════════════════════════════════
+   ABOUT PAGE
+══════════════════════════════════════ */
+#page-about{padding:60px 80px;display:none}
+#page-about.active{display:block}
+.about-hero{display:flex;gap:60px;align-items:center;margin-bottom:60px}
+.about-h{font-size:2.1rem;font-weight:800;line-height:1.3;margin-bottom:20px}
+.about-h .brand{color:var(--accent)}
+.about-text{color:rgba(255,255,255,.8);line-height:1.75;font-size:.95rem}
+.about-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:40px}
+.about-card{background:var(--grad);border-radius:var(--r);padding:28px;text-align:center}
+.about-card .icon{font-size:2.2rem;margin-bottom:12px}
+.about-card h4{font-size:.98rem;font-weight:700;margin-bottom:8px}
+.about-card p{font-size:.83rem;color:rgba(255,255,255,.7);line-height:1.6}
+
+/* scrollbar */
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:rgba(255,255,255,.04)}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.18);border-radius:3px}
+
+/* ========== AI ASSISTANT ========== */
+.ai-assistant{position:fixed;bottom:24px;right:24px;z-index:9999}
+ 
+.ai-toggle{
+  width:58px;height:58px;border-radius:50%;
+  background:linear-gradient(135deg,#E8365D,#302FA1);
+  border:none;cursor:pointer;
+  box-shadow:0 4px 20px rgba(232,54,93,0.45);
+  display:flex;align-items:center;justify-content:center;
+  font-size:26px;transition:.3s;
+  animation:ai-pulse 2.5s infinite;
+}
+.ai-toggle:hover{transform:scale(1.1)}
+@keyframes ai-pulse{
+  0%{box-shadow:0 0 0 0 rgba(232,54,93,.5)}
+  70%{box-shadow:0 0 0 16px rgba(232,54,93,0)}
+  100%{box-shadow:0 0 0 0 rgba(232,54,93,0)}
+}
+ 
+.ai-window{
+  position:fixed;bottom:96px;right:24px;
+  width:390px;height:560px;
+  background:linear-gradient(160deg,#1a1a3e,#0f0f28);
+  border-radius:20px;
+  box-shadow:0 12px 50px rgba(0,0,0,.5);
+  border:1px solid rgba(232,54,93,.25);
+  display:flex;flex-direction:column;overflow:hidden;
+  transform:scale(0.9) translateY(20px);
+  opacity:0;pointer-events:none;
+  transition:all .28s cubic-bezier(.34,1.56,.64,1);
+  z-index:9998;
+}
+.ai-window.open{transform:scale(1) translateY(0);opacity:1;pointer-events:all}
+ 
+.ai-header{
+  background:linear-gradient(135deg,#E8365D,#302FA1);
+  padding:14px 18px;
+  display:flex;align-items:center;gap:10px;
+  flex-shrink:0;
+}
+.ai-header-av{
+  width:36px;height:36px;border-radius:50%;
+  background:rgba(255,255,255,.2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;flex-shrink:0;
+}
+.ai-header-info{flex:1}
+.ai-header-info .ai-name{font-size:.95rem;font-weight:700;color:#fff}
+.ai-header-info .ai-status{font-size:.72rem;color:rgba(255,255,255,.7);display:flex;align-items:center;gap:5px}
+.ai-status-dot{width:7px;height:7px;border-radius:50%;background:#4afa8a;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+.ai-close-btn{
+  width:28px;height:28px;border-radius:50%;
+  background:rgba(255,255,255,.18);border:none;
+  color:#fff;cursor:pointer;font-size:.9rem;
+  display:flex;align-items:center;justify-content:center;transition:.2s;
+}
+.ai-close-btn:hover{background:rgba(255,255,255,.35)}
+ 
+.ai-msgs{
+  flex:1;overflow-y:auto;
+  padding:14px 14px 8px;
+  display:flex;flex-direction:column;gap:10px;
+}
+.ai-msgs::-webkit-scrollbar{width:4px}
+.ai-msgs::-webkit-scrollbar-thumb{background:rgba(232,54,93,.4);border-radius:2px}
+ 
+.ai-msg{display:flex;gap:8px;animation:msgIn .25s ease}
+@keyframes msgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.ai-msg-av{
+  width:30px;height:30px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;flex-shrink:0;margin-top:2px;
+}
+.ai-msg.bot .ai-msg-av{background:#302FA1}
+.ai-msg.user .ai-msg-av{background:#E8365D}
+.ai-msg-bubble{
+  max-width:82%;padding:9px 13px;border-radius:14px;
+  font-size:.84rem;line-height:1.55;word-break:break-word;
+}
+.ai-msg.bot .ai-msg-bubble{
+  background:rgba(48,47,161,.25);
+  border:1px solid rgba(48,47,161,.35);
+  color:rgba(255,255,255,.92);border-radius:4px 14px 14px 14px;
+}
+.ai-msg.user .ai-msg-bubble{
+  background:rgba(232,54,93,.22);
+  border:1px solid rgba(232,54,93,.3);
+  color:#fff;border-radius:14px 4px 14px 14px;
+  margin-left:auto;
+}
+.ai-msg.user{flex-direction:row-reverse}
+ 
+.ai-typing{display:flex;gap:5px;padding:6px 10px}
+.ai-typing span{
+  width:7px;height:7px;border-radius:50%;
+  background:rgba(255,255,255,.5);
+  animation:typing-dot 1.3s infinite;
+}
+.ai-typing span:nth-child(2){animation-delay:.2s}
+.ai-typing span:nth-child(3){animation-delay:.4s}
+@keyframes typing-dot{
+  0%,60%,100%{transform:translateY(0)}
+  30%{transform:translateY(-8px)}
+}
+ 
+.ai-quick{
+  display:flex;gap:7px;padding:10px 14px;
+  overflow-x:auto;border-top:1px solid rgba(255,255,255,.06);
+  background:rgba(0,0,0,.15);flex-shrink:0;
+}
+.ai-quick::-webkit-scrollbar{display:none}
+.ai-quick-btn{
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.18);
+  border-radius:18px;padding:5px 12px;
+  font-size:.72rem;color:rgba(255,255,255,.78);
+  cursor:pointer;white-space:nowrap;transition:.18s;
+  font-family:var(--font-b);
+}
+.ai-quick-btn:hover{background:rgba(232,54,93,.3);border-color:#E8365D;color:#fff}
+ 
+.ai-input-row{
+  padding:12px 14px;
+  border-top:1px solid rgba(255,255,255,.08);
+  display:flex;gap:9px;background:rgba(0,0,0,.18);
+  flex-shrink:0;align-items:center;
+}
+.ai-input-field{
+  flex:1;background:rgba(255,255,255,.09);
+  border:1px solid rgba(255,255,255,.18);border-radius:22px;
+  padding:9px 15px;color:#fff;
+  font-family:var(--font-b);font-size:.84rem;outline:none;transition:.2s;
+}
+.ai-input-field:focus{border-color:#E8365D;background:rgba(255,255,255,.13)}
+.ai-input-field::placeholder{color:rgba(255,255,255,.4)}
+.ai-send-btn{
+  width:38px;height:38px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,#E8365D,#302FA1);
+  border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:.2s;font-size:15px;color:#fff;
+}
+.ai-send-btn:hover{transform:scale(1.08)}
+.ai-send-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+ 
+@media(max-width:520px){
+  .ai-window{width:calc(100vw - 32px);right:16px;height:500px}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ NAV ═══════════ -->
+<nav>
+  <!-- Лого: два одинаковых слоя, розовый сдвинут на 3px -->
+  <div class="logo-wrap" onclick="showPage('hello')">
+    <div class="logo-back">Engine3D</div>
+    <div class="logo-front">Engine3D</div>
+  </div>
+
+  <div class="nav-links">
+    <a onclick="showPage('about')">About</a>
+    <a onclick="showPage('catalog')">3D Models</a>
+    <a onclick="showPage('request')">Model Request</a>
+    <a onclick="showPage('support')">Support</a>
+    <a href="#">Language</a>
+  </div>
+  <div class="nav-r">
+    <div class="s-box">
+      <input type="text" placeholder="Search" id="nav-search" oninput="liveSearch()">
+      <span class="s-icon">🔍</span>
+    </div>
+    <div id="nav-user-area">
+      <button class="btn btn-sm" onclick="showPage('login')">Sign up</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══════════ HELLO ═══════════ -->
+<div id="page-hello" class="page active">
+  <div class="hello-l">
+    <h1 class="hello-h">Explore the equipment<br>with <span class="brand">Engine 3D</span>!</h1>
+
+    <ul class="hello-feats">
+      <li>
+        <!-- стрелка: два SVG, белый + розовый сдвинутый -->
+        <span class="arr-wrap">
+          <svg class="arr-back" width="30" height="22" viewBox="0 0 30 22" fill="none">
+            <path d="M1 11H29M29 11L19 1M29 11L19 21" stroke="#e8365d" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <svg width="30" height="22" viewBox="0 0 30 22" fill="none">
+            <path d="M1 11H29M29 11L19 1M29 11L19 21" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        3D models for the technical sector of education and work
+      </li>
+      <li>
+        <span class="arr-wrap">
+          <svg class="arr-back" width="30" height="22" viewBox="0 0 30 22" fill="none">
+            <path d="M1 11H29M29 11L19 1M29 11L19 21" stroke="#e8365d" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <svg width="30" height="22" viewBox="0 0 30 22" fill="none">
+            <path d="M1 11H29M29 11L19 1M29 11L19 21" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        constant updating of the database of models
+      </li>
+      <li>
+        <span class="arr-wrap">
+          <svg class="arr-back" width="30" height="22" viewBox="0 0 30 22" fill="none">
+            <path d="M1 11H29M29 11L19 1M29 11L19 21" stroke="#e8365d" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <svg width="30" height="22" viewBox="0 0 30 22" fill="none">
+            <path d="M1 11H29M29 11L19 1M29 11L19 21" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        the ability to request the desired model
+      </li>
+    </ul>
+
+    <button class="btn" style="font-size:.97rem;padding:13px 36px" onclick="showPage('catalog')">Explore models</button>
+  </div>
+
+  <!-- Картинки — свободный overlapping layout -->
+  <div class="hello-r">
+    <!-- img 1: замени src на images/vr.webp -->
+    <div class="hi-1">
+      <img src="images/hand.jpg" alt="VR">
+    </div>
+    <!-- img 2: замени src на images/3dcenter.jpg -->
+    <div class="hi-2">
+      <img src="images/3dcenter.jpg" alt="3D Software">
+    </div>
+    <!-- img 3: замени src на images/hand.jpg -->
+    <div class="hi-3">
+      <img src="images/vr.webp" alt="Tech">
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ LOGIN ═══════════ -->
+<div id="page-login" class="page">
+  <div class="auth-card">
+    <h2 class="auth-title">Login form</h2>
+    <div class="tab-sw">
+      <button class="active" id="tab-login" onclick="switchAuthTab('login')">Login</button>
+      <button id="tab-signup" onclick="switchAuthTab('signup')">Signup</button>
+    </div>
+    <div class="form-sec active" id="fs-login">
+      <div class="igroup"><label>Email <span class="req">*</span></label><input class="ifield" type="email" id="li-email" placeholder="example@email.com"></div>
+      <div class="igroup"><label>Password <span class="req">*</span></label><input class="ifield" type="password" id="li-pw" placeholder="••••••••••••"></div>
+      <div class="divider">Login with</div>
+      <div class="social-row">
+        <button class="sb sb-fb"><svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></button>
+        <button class="sb sb-li"><svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></svg></button>
+        <button class="sb sb-go"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg></button>
+      </div>
+      <button class="sub-btn" onclick="doLogin()">Login</button>
+    </div>
+    <div class="form-sec" id="fs-signup">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="igroup"><label>Name <span class="req">*</span></label><input class="ifield" id="su-name" placeholder="Your name"></div>
+        <div class="igroup"><label>Surname <span class="req">*</span></label><input class="ifield" id="su-sname" placeholder="Your surname"></div>
+      </div>
+      <div class="igroup"><label>Email <span class="req">*</span></label><input class="ifield" type="email" id="su-email" placeholder="example@email.com"></div>
+      <div class="igroup"><label>Password <span class="req">*</span></label><input class="ifield" type="password" id="su-pw" placeholder="••••••••••••"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="igroup"><label>Institution</label><input class="ifield" id="su-inst" placeholder=" Your work/institution"></div>
+        <div class="igroup"><label>Speciality</label><input class="ifield" id="su-spec" placeholder="Your speciality"></div>
+      </div>
+      <button class="sub-btn" onclick="doRegister()">Create account</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ CATALOG ═══════════ -->
+<div id="page-catalog" class="page">
+  <div class="catalog-top">
+    <h2>3D Equipment model catalog</h2>
+    <div class="s-box cat-s">
+      <input type="text" placeholder="Search" id="cat-search" oninput="renderCatalog()">
+      <span class="s-icon">🔍</span>
+    </div>
+    <button class="btn-ghost btn-sm" onclick="toggleSort()">Sort by ▾</button>
+  </div>
+
+  <div class="cats" id="cat-filters">
+    <button class="tag active" data-cat="all">All</button>
+    <button class="tag" data-cat="Oil and gas">Oil and gas</button>
+    <button class="tag" data-cat="Chemistry">Chemistry</button>
+    <button class="tag" data-cat="Physics">Physics</button>
+    <button class="tag" data-cat="Automation">Automation</button>
+    <button class="tag" data-cat="Robotics">Robotics</button>
+  </div>
+
+  <div class="models-grid" id="catalog-grid"></div>
+</div>
+
+<!-- ═══════════ VIEWER ═══════════ -->
+<div id="page-viewer" class="page">
+  <div class="viewer-wrap">
+    <div class="viewer-main">
+      <button class="back-btn" onclick="showPage('catalog')">← Back to catalog</button>
+      
+      <div class="viewer-ctrl">
+        <button class="ctrl-btn" onclick="mvZoom(-3)">Zoom in</button>
+        <button class="ctrl-btn" onclick="mvZoom(3)">Zoom out</button>
+        <button class="ctrl-btn" onclick="mvReset()">Focus</button>
+      </div>
+
+      <model-viewer
+        id="mv"
+        camera-controls
+        shadow-intensity="1"
+        environment-intensity="0.7"
+        exposure="0.8"
+        style="width:100%; height:100%; background:#0a0a1a;"
+        alt="3D Model"
+      >
+        <!-- Hotspots будут добавляться динамически -->
+      </model-viewer>
+    </div>
+
+    <div class="ann-panel">
+      <div class="ann-head"><h3>Annotations ▾</h3></div>
+      <div class="ann-body" id="ann-body">
+        <div class="ann-num" id="ann-num">1</div>
+        <p class="ann-text" id="ann-text">Click on a hotspot on the model to see details.</p>
+        <div class="ann-kp" id="ann-kp-label" style="display:none">Key points</div>
+        <ul class="ann-list" id="ann-kp-list"></ul>
+        <div class="ann-thumb" id="ann-thumb">No diagram yet</div>
+      </div>
+      <div class="ann-tabs" id="ann-tabs"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ PROFILE ═══════════ -->
+<div id="page-profile" class="page">
+  <div class="profile-wrap">
+    <div class="p-sidebar">
+      <div class="p-avatar" id="p-av-icon">K</div>
+      <div>
+        <div class="p-name" id="p-sidebar-name">Khussainova Karina</div>
+        <div class="p-email" id="p-sidebar-email">k_khussainova@kbtu.kz</div>
+      </div>
+      <button class="p-nav-btn active" onclick="switchProfileTab('info',this)">Account information</button>
+      <button class="p-nav-btn" onclick="switchProfileTab('courses',this)">Study courses</button>
+      <button class="p-nav-btn" onclick="switchProfileTab('saved',this)">Saved models</button>
+      <button class="p-nav-btn" onclick="switchProfileTab('requests',this)">Requests</button>
+      <div style="margin-top:auto;width:100%">
+        <button class="btn" style="width:100%" onclick="doLogout()">Change to simple mode</button>
+        <div class="p-footer" style="margin-top:14px">
+          <a>Settings</a><a>FAQ</a><a>Support</a>
+        </div>
+      </div>
+    </div>
+    <div class="p-content">
+      <div class="p-section active" id="ps-info">
+        <h2>Information about user</h2>
+        <div class="info-grid">
+          <div class="igroup"><label>Name <span class="req">*</span></label><input class="ifield" id="pi-name"></div>
+          <div class="igroup"><label>Surname <span class="req">*</span></label><input class="ifield" id="pi-sname"></div>
+          <div class="igroup" style="grid-column:1/-1"><label>Email <span class="req">*</span></label><input class="ifield" id="pi-email"></div>
+          <div class="igroup"><label>Institution / Place of work</label><input class="ifield" id="pi-inst"></div>
+          <div class="igroup"><label>Speciality / Profession</label><input class="ifield" id="pi-spec"></div>
+        </div>
+        <div style="margin-top:20px">
+          <p style="font-size:.85rem;color:var(--muted);margin-bottom:10px;font-weight:500">Preferences</p>
+          <div class="prefs-list">
+            <label class="chk-item"><input type="checkbox"> Technical models with full parameters</label>
+            <label class="chk-item"><input type="checkbox"> Models for using in CAD</label>
+            <label class="chk-item"><input type="checkbox"> Models with full description</label>
+            <label class="chk-item"><input type="checkbox"> Models for Maya program</label>
+            <label class="chk-item"><input type="checkbox"> Using simple explanation using AI</label>
+          </div>
+        </div>
+        <button class="btn" style="margin-top:24px" onclick="saveProfileInfo()">Save changes</button>
+      </div>
+      <div class="p-section" id="ps-courses">
+        <h2>Study courses</h2>
+        <p style="color:var(--muted);margin-top:12px;font-size:.9rem">No courses enrolled yet. Explore the catalog and start learning!</p>
+        <button class="btn" style="margin-top:20px" onclick="showPage('catalog')">Browse catalog</button>
+      </div>
+      <div class="p-section" id="ps-saved">
+        <h2>Saved models</h2>
+        <div class="saved-grid" id="saved-grid"></div>
+      </div>
+      <div class="p-section" id="ps-requests">
+        <h2>My requests</h2>
+        <div id="profile-reqs"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ REQUEST ═══════════ -->
+<div id="page-request" class="page">
+  <h2 style="font-size:1.4rem;font-weight:700;margin-bottom:8px;padding:36px 48px 0">Model Request</h2>
+  <p style="color:var(--muted);font-size:.88rem;padding:0 48px 0">Can't find the model you need? Describe it and our team will create it.</p>
+  <div class="req-wrap">
+    <div class="req-form-card">
+      <h3>New request</h3>
+      <div class="req-form-grid">
+        <div class="igroup"><label>Model name <span class="req">*</span></label><input class="ifield" id="rq-name" placeholder="e.g. Centrifugal pump type K"></div>
+        <div class="igroup"><label>Description <span class="req">*</span></label><textarea class="ifield" id="rq-desc" placeholder="Describe the model: purpose, scale, required annotations..."></textarea></div>
+        <div class="igroup"><label>Category</label>
+          <select class="ifield" id="rq-cat" style="cursor:pointer">
+            <option>Oil and gas</option><option>Chemistry</option><option>Physics</option><option>Automation</option><option>Robotics</option><option>Other</option>
+          </select>
+        </div>
+        <div class="igroup">
+          <label>Reference images (optional)</label>
+          <div class="file-drop" onclick="document.getElementById('rq-files').click()">
+            <input type="file" id="rq-files" multiple accept="image/*" onchange="showFiles(this)">
+            <div>📎 Click to attach images</div>
+            <div id="file-names" style="margin-top:6px;font-size:.78rem;color:rgba(255,255,255,.5)"></div>
+          </div>
+        </div>
+        <button class="btn" style="width:100%;padding:14px" onclick="submitRequest()">Send Request</button>
+      </div>
+    </div>
+    <div class="req-history">
+      <h3>Request history</h3>
+      <div id="req-history-list" style="margin-top:4px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ ABOUT ═══════════ -->
+<div id="page-about" class="page">
+  <div class="about-hero">
+    <div style="flex:1">
+      <h2 class="about-h">About <span class="brand">Engine 3D</span></h2>
+      <p class="about-text">Engine 3D is an educational platform for interactive 3D visualization of industrial and scientific equipment. Students explore annotated models, understand complex machinery, and can request any model they need.</p>
+      <p class="about-text" style="margin-top:12px">Our team of 3D artists creates new models on demand — usually within a few days. Every model comes with annotations, theory sections, and optional tests.</p>
+      <button class="btn" style="margin-top:28px" onclick="showPage('catalog')">Explore the catalog</button>
+    </div>
+    <div style="flex:0 0 300px;height:240px;background:var(--grad);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:4rem">🏭</div>
+  </div>
+  <div class="about-cards">
+    <div class="about-card"><div class="icon">🎯</div><h4>Annotated 3D Models</h4><p>Every part of each model is annotated with definitions, theory, and key facts to support deep learning.</p></div>
+    <div class="about-card"><div class="icon">📩</div><h4>Model Requests</h4><p>Submit a request with a description and reference images — we'll build and upload the model for you.</p></div>
+    <div class="about-card"><div class="icon">🎓</div><h4>Built for Students</h4><p>Designed for engineering and science students who need to understand real industrial equipment visually.</p></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ SUPPORT ═══════════════════════ -->
+<div id="page-support" class="page">
+  <div style="padding:40px 48px 0">
+    <h2 style="font-size:1.5rem;font-weight:700">Support</h2>
+    <p style="color:var(--muted);font-size:.9rem;margin-top:6px">Having an issue? Reach out to us and we'll help as soon as possible.</p>
+  </div>
+ 
+  <div style="display:grid;grid-template-columns:1fr 380px;gap:28px;padding:28px 48px 48px">
+ 
+    <!-- LEFT: form -->
+    <div class="req-form-card">
+      <h3>Report a technical problem</h3>
+      <div class="req-form-grid" style="margin-top:20px">
+        <div class="igroup">
+          <label>Your name <span class="req">*</span></label>
+          <input class="ifield" id="sup-name" placeholder="Enter Full name">
+        </div>
+        <div class="igroup">
+          <label>Email <span class="req">*</span></label>
+          <input class="ifield" type="email" id="sup-email" placeholder="Enter email, e.g example@gmail.com">
+        </div>
+        <div class="igroup">
+          <label>Problem type</label>
+          <select class="ifield" id="sup-type" style="cursor:pointer">
+            <option>Cannot load a model</option>
+            <option>Account / login issue</option>
+            <option>Model request not processed</option>
+            <option>Annotations not displaying</option>
+            <option>Performance / lag</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="igroup">
+          <label>Description <span class="req">*</span></label>
+          <textarea class="ifield" id="sup-desc" placeholder="Describe the issue in detail — what happened, which page, which model..." style="min-height:120px"></textarea>
+        </div>
+        <div class="igroup">
+          <label>Attach screenshot (optional)</label>
+          <div class="file-drop" onclick="document.getElementById('sup-files').click()">
+            <input type="file" id="sup-files" multiple accept="image/*" onchange="showSupFiles(this)">
+            <div>📎 Click to attach screenshots</div>
+            <div id="sup-file-names" style="margin-top:6px;font-size:.8rem;color:rgba(255,255,255,.45)"></div>
+          </div>
+        </div>
+        <button class="btn" style="width:100%;padding:14px" onclick="submitSupport()">Send message</button>
+      </div>
+    </div>
+ 
+    <!-- RIGHT: contacts + submitted tickets -->
+    <div style="display:flex;flex-direction:column;gap:20px">
+ 
+      <!-- Contact info card -->
+      <div class="req-form-card" style="gap:0;padding:28px 30px">
+        <h3 style="margin-bottom:22px">Contact us</h3>
+ 
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <!-- Email -->
+          <div style="display:flex;align-items:flex-start;gap:14px">
+            <div style="width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            </div>
+            <div>
+              <div style="font-size:.78rem;color:var(--muted);margin-bottom:3px;font-weight:500;text-transform:uppercase;letter-spacing:.5px">Email</div>
+              <a href="mailto:3dengine@gmail.com" style="color:#fff;text-decoration:none;font-size:.95rem;font-weight:600">3dengine@gmail.com</a>
+            </div>
+          </div>
+ 
+          <!-- Phone -->
+          <div style="display:flex;align-items:flex-start;gap:14px">
+            <div style="width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.18 2 2 0 0 1 3.6 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 6 6l.96-.96a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            </div>
+            <div>
+              <div style="font-size:.78rem;color:var(--muted);margin-bottom:3px;font-weight:500;text-transform:uppercase;letter-spacing:.5px">Phone</div>
+              <a href="tel:+77713802323" style="color:#fff;text-decoration:none;font-size:.95rem;font-weight:600">+7 771 380 23 23</a>
+            </div>
+          </div>
+ 
+          <!-- Address -->
+          <div style="display:flex;align-items:flex-start;gap:14px">
+            <div style="width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            </div>
+            <div>
+              <div style="font-size:.78rem;color:var(--muted);margin-bottom:3px;font-weight:500;text-transform:uppercase;letter-spacing:.5px">Office</div>
+              <span style="color:#fff;font-size:.95rem;font-weight:600">Tole bi 59, Almaty</span>
+            </div>
+          </div>
+ 
+          <!-- Working hours -->
+          <div style="border-top:1px solid rgba(255,255,255,.12);padding-top:16px;margin-top:4px">
+            <div style="font-size:.78rem;color:var(--muted);margin-bottom:8px;font-weight:500;text-transform:uppercase;letter-spacing:.5px">Working hours</div>
+            <div style="font-size:.88rem;color:rgba(255,255,255,.85);line-height:1.7">
+              Mon – Fri: 9:00 – 18:00<br>
+              Sat – Sun: closed
+            </div>
+          </div>
+        </div>
+      </div>
+ 
+      <!-- Submitted tickets -->
+      <div class="req-form-card" style="padding:24px 30px">
+        <h3 style="margin-bottom:14px;font-size:1rem">My tickets</h3>
+        <div id="sup-tickets-list">
+          <p style="color:var(--muted);font-size:.88rem">No submitted tickets yet.</p>
+        </div>
+      </div>
+ 
+    </div>
+  </div>
+</div>
+
+<!-- ========== AI ASSISTANT ========== -->
+<div class="ai-assistant">
+  <button class="ai-toggle" id="aiToggle" title="AI Assistant">🤖</button>
+ 
+  <div class="ai-window" id="aiWindow">
+    <div class="ai-header">
+      <div class="ai-header-av">🤖</div>
+      <div class="ai-header-info">
+        <div class="ai-name">Engine 3D Assistant</div>
+        <div class="ai-status"><span class="ai-status-dot"></span> Online · powered by Claude AI</div>
+      </div>
+      <button class="ai-close-btn" id="aiClose">✕</button>
+    </div>
+ 
+    <div class="ai-msgs" id="aiMsgs">
+      <div class="ai-msg bot">
+        <div class="ai-msg-av">🤖</div>
+        <div class="ai-msg-bubble">
+          Hi! I'm your Engine 3D AI assistant 👋<br><br>
+          I can explain 3D model annotations, help you understand industrial equipment, navigate the platform, or answer any technical question — just ask!
+        </div>
+      </div>
+    </div>
+ 
+    <div class="ai-quick" id="aiQuick">
+      <button class="ai-quick-btn" data-q="Explain what a centrifugal pump does">🛢️ Centrifugal pump</button>
+      <button class="ai-quick-btn" data-q="How do annotations work in the viewer?">📝 Annotations</button>
+      <button class="ai-quick-btn" data-q="How do I request a model?">📩 Request model</button>
+      <button class="ai-quick-btn" data-q="What industrial equipment can I study here?">🏭 What to study</button>
+    </div>
+ 
+    <div class="ai-input-row">
+      <input class="ai-input-field" id="aiInput" placeholder="Ask anything about 3D models or the platform…" autocomplete="off">
+      <button class="ai-send-btn" id="aiSend" title="Send">➤</button>
+    </div>
+  </div>
+</div>
+ 
+
+<!-- ═══════════ SCRIPT ═══════════ -->
+<script>
+const MODELS_DB = [
+  {
+    id: "gas_shield",
+    name: "Borehole equipment assembly",
+    category: "Oil and gas",
+    thumbnail: "images/gas_shield.png",           
+    modelUrl: "models/gas_shield.glb",                
+    features: ["Annotations", "Theory"],
+    annotations: [
+      {
+        id: 1,
+        part: "Valve Assembly",
+        text: "Controls and seals the well at the surface, maintaining pressure integrity and allowing safe regulation of fluid flow. This component serves as the interface between subsurface equipment and surface infrastructure.",
+        position: "0 7 -1",     
+        normal: "0 1 0",
+        points: ["Maintains well pressure and prevents blowouts", "Provides access for monitoring and maintenance", "Connects tubing system to surface pipelines", "Critical safety barrier in well operation"]
+      },
+      {
+        id: 2,
+        part: "Threaded Connection",
+        text: "Ensures a hermetic and mechanically stable connection between modular components. Designed to withstand cyclic loads, vibration, and high internal pressure without loss of sealing.",
+        position: "0 6.7 -1",
+        normal: "0 0 1",
+        points: ["Load-bearing mechanical joint", "Prevents leakage under pressure", "Allows disassembly and replacement", "Requires precise machining tolerances"]
+      },
+      {
+        id: 3,
+        part: "Adapter / Transition Section",
+        text: "Provides geometric and mechanical transition between sections with different diameters or functions. Distributes stress and prevents concentration of forces at connection points.",
+        position: "0 6.4 -1",
+        normal: "0 0 1",
+        points: ["Reduces stress concentration", "Ensures compatibility of components", "Maintains flow continuity", "Improves structural reliability"]
+      },
+      {
+        id: 4,
+        part: "Production Tubing",
+        text: "Primary conduit for transporting fluids from the reservoir to the surface. Must resist internal pressure, corrosion, and temperature variations while maintaining flow efficiency.",
+        position: "0 4 -1",
+        normal: "0 0 1",
+        points: ["Direct fluid transport path", "Subject to corrosion and scaling", "Designed for high-pressure environments", "Affects overall production efficiency"]
+      },
+      {
+        id: 5,
+        part: "Casing / Outer Housing",
+        text: "Provides structural support and isolates the well from surrounding geological formations. Prevents collapse of the borehole and protects internal components from external pressure and contamination.",
+        position: "-0.2 4 -1",
+        normal: "0 0 1",
+        points: ["Maintains well integrity", "Isolates different geological layers", "Protects against external pressure", "Prevents fluid leakage into formations"]
+      },
+      {
+        id: 6,
+        part: "Downhole Pump / Valve Unit",
+        text: "Regulates fluid movement within the system and enables controlled extraction. Converts mechanical or pressure energy into directed fluid flow.",
+        position: "0 1.2 -1",
+        normal: "0 0 1",
+        points: ["Controls flow direction and rate", "Works under extreme pressure conditions", "Key component for lifting fluids", "Determines system efficiency"]
+      },
+      {
+        id: 7,
+        part: "Rod / Drive Shaft",
+        text: "Transmits mechanical motion from the surface to downhole components. Must maintain alignment and withstand repeated cyclic loading without failure.",
+        position: "0 3.5 -1",
+        normal: "0 0 1",
+        points: ["Transfers mechanical energy", "Subject to fatigue stress", "Requires high strength and precision", "Critical for pump operation"]
+      }
+    ]
+  },
+  {
+    id: "centrifugal-pumping-unit",
+    name: "Centrifugal pumping unit",
+    category: "Oil and gas",
+    thumbnail: "images/manufacture_pump.png",
+    modelUrl: "models/nk_pump_v01.glb",
+    features: ["Annotations", "Theory"],
+    annotations: [
+      {
+        id: 1,
+        part: "Electric Motor",
+        text: "Converts electrical energy into mechanical rotational motion, driving the pump shaft. The motor determines the overall power, speed, and operational stability of the system.",
+        position: "-0.4 0.4 0.1",    
+        normal: "1 1 1",
+        points: ["Defines rotation speed (RPM)", "Main energy source of the system", "Requires cooling", "Efficiency directly affects energy consumption"]
+      },
+      {
+        id: 2,
+        part: "Shaft / Coupling Section",
+        text: "Transfers torque from the motor to the pump while compensating for slight misalignment. Ensures smooth rotation and reduces mechanical stress between components.",
+        position: "0 0.4 0.1",
+        normal: "0 0 1",
+        points: ["Torque transmission", "Alignment compensation", "Reduces vibration", "Critical for durability of bearings"]
+      },
+      {
+        id: 3,
+        part: "Bearing Housing / Support",
+        text: "Supports the rotating shaft and maintains precise alignment. Reduces friction and prevents excessive wear during continuous operation.",
+        position: "0 0.27 0",
+        normal: "0 0 1",
+        points: ["Maintains shaft stability", "Reduces friction losses", "Prevents vibration", "Extends equipment lifespan"]
+      },
+      {
+        id: 4,
+        part: "Pump Casing",
+        text: "Encloses the impeller and directs fluid flow. Converts kinetic energy from the rotating fluid into pressure through its volute geometry.",
+        position: "0.5 0.4 0.1",
+        normal: "0 0 1",
+        points: ["Converts velocity into pressure", "Spiral shape (volute design)", "Determines hydraulic efficiency", "Must withstand internal pressure"]
+      },
+      {
+        id: 5,
+        part: "Impeller",
+        text: "Rotating element that imparts energy to the fluid. Accelerates the liquid outward using centrifugal force, increasing its velocity.",
+        position: "0.6 0.4 0",
+        normal: "0 0 1",
+        points: ["Core pumping element", "Generates flow and pressure", "Efficiency depends on blade design", "Subject to erosion and cavitation"]
+      },
+      {
+        id: 6,
+        part: "Inlet",
+        text: "Entry point where fluid enters the pump. Proper inlet conditions are essential to avoid cavitation and ensure stable operation.",
+        position: "0.73 0.4 0",
+        normal: "0 0 1",
+        points: ["Fluid enters at low pressure", "Sensitive to flow conditions", "Cavitation risk zone", "Affects pump performance"]
+      },
+      {
+        id: 7,
+        part: "Outlet",
+        text: "Discharge point where fluid exits at increased pressure. The outlet directs the flow into the pipeline system.",
+        position: "0.6 0.6 0",
+        normal: "0 0 1",
+        points: ["High-pressure output", "Connected to pipeline", "Determines system head", "Influences flow rate"]
+      },
+      {
+        id: 8,
+        part: "Base Frame",
+        text: "Provides structural support and maintains alignment between motor and pump. Reduces vibration and ensures stable operation.",
+        position: "0 0.1 0.2",
+        normal: "0 0 1",
+        points: ["Structural stability", "Vibration damping", "Alignment preservation", "Mounting surface"]
+      }
+
+     ]
+  },
+  {
+    id: "clasical_dosage",
+    name: "Dosage equipment",
+    category: "Chemistry",
+    thumbnail: "images/classic_dosage.png",
+    modelUrl: "models/nk_pump_v01.glb",
+    features: ["Annotations", "Theory", "Metrics"],
+    annotations: [
+      {
+        id: 1,
+        part: "Electric Motor",
+        text: "Converts electrical energy into mechanical rotational motion, driving the pump shaft. The motor determines the overall power, speed, and operational stability of the system.",
+        position: "-0.4 0.4 0.1",     
+        normal: "1 1 1",
+        points: ["Defines rotation speed (RPM)", "Main energy source of the system", "Requires cooling", "Efficiency directly affects energy consumption"]
+      },
+      {
+        id: 2,
+        part: "Shaft / Coupling Section",
+        text: "Transfers torque from the motor to the pump while compensating for slight misalignment. Ensures smooth rotation and reduces mechanical stress between components.",
+        position: "0 0.4 0.1",
+        normal: "0 0 1",
+        points: ["Torque transmission", "Alignment compensation", "Reduces vibration", "Critical for durability of bearings"]
+      },
+      {
+        id: 3,
+        part: "Bearing Housing / Support",
+        text: "Supports the rotating shaft and maintains precise alignment. Reduces friction and prevents excessive wear during continuous operation.",
+        position: "0 0.27 0",
+        normal: "0 0 1",
+        points: ["Maintains shaft stability", "Reduces friction losses", "Prevents vibration", "Extends equipment lifespan"]
+      },
+      {
+        id: 4,
+        part: "Pump Casing",
+        text: "Encloses the impeller and directs fluid flow. Converts kinetic energy from the rotating fluid into pressure through its volute geometry.",
+        position: "0.5 0.4 0.1",
+        normal: "0 0 1",
+        points: ["Converts velocity into pressure", "Spiral shape (volute design)", "Determines hydraulic efficiency", "Must withstand internal pressure"]
+      },
+      {
+        id: 5,
+        part: "Impeller",
+        text: "Rotating element that imparts energy to the fluid. Accelerates the liquid outward using centrifugal force, increasing its velocity.",
+        position: "0.6 0.4 0",
+        normal: "0 0 1",
+        points: ["Core pumping element", "Generates flow and pressure", "Efficiency depends on blade design", "Subject to erosion and cavitation"]
+      },
+      {
+        id: 6,
+        part: "Inlet",
+        text: "Entry point where fluid enters the pump. Proper inlet conditions are essential to avoid cavitation and ensure stable operation.",
+        position: "0.73 0.4 0",
+        normal: "0 0 1",
+        points: ["Fluid enters at low pressure", "Sensitive to flow conditions", "Cavitation risk zone", "Affects pump performance"]
+      },
+      {
+        id: 7,
+        part: "Outlet",
+        text: "Discharge point where fluid exits at increased pressure. The outlet directs the flow into the pipeline system.",
+        position: "0.6 0.6 0",
+        normal: "0 0 1",
+        points: ["High-pressure output", "Connected to pipeline", "Determines system head", "Influences flow rate"]
+      },
+      {
+        id: 8,
+        part: "Base Frame",
+        text: "Provides structural support and maintains alignment between motor and pump. Reduces vibration and ensures stable operation.",
+        position: "0 0.1 0.2",
+        normal: "0 0 1",
+        points: ["Structural stability", "Vibration damping", "Alignment preservation", "Mounting surface"]
+      }
+
+     ]
+  },
+  {
+    id: "io_controller",
+    name: "I/O Controller",
+    category: "Automation",
+    thumbnail: "images/io_contorller.png",
+    modelUrl: "models/nk_pump_v01.glb",
+    features: ["Annotations", "Theory", "Metrics"],
+    annotations: [
+      {
+        id: 1,
+        part: "Electric Motor",
+        text: "Converts electrical energy into mechanical rotational motion, driving the pump shaft. The motor determines the overall power, speed, and operational stability of the system.",
+        position: "-0.4 0.4 0.1",     
+        normal: "1 1 1",
+        points: ["Defines rotation speed (RPM)", "Main energy source of the system", "Requires cooling", "Efficiency directly affects energy consumption"]
+      },
+      {
+        id: 2,
+        part: "Shaft / Coupling Section",
+        text: "Transfers torque from the motor to the pump while compensating for slight misalignment. Ensures smooth rotation and reduces mechanical stress between components.",
+        position: "0 0.4 0.1",
+        normal: "0 0 1",
+        points: ["Torque transmission", "Alignment compensation", "Reduces vibration", "Critical for durability of bearings"]
+      },
+      {
+        id: 3,
+        part: "Bearing Housing / Support",
+        text: "Supports the rotating shaft and maintains precise alignment. Reduces friction and prevents excessive wear during continuous operation.",
+        position: "0 0.27 0",
+        normal: "0 0 1",
+        points: ["Maintains shaft stability", "Reduces friction losses", "Prevents vibration", "Extends equipment lifespan"]
+      },
+      {
+        id: 4,
+        part: "Pump Casing",
+        text: "Encloses the impeller and directs fluid flow. Converts kinetic energy from the rotating fluid into pressure through its volute geometry.",
+        position: "0.5 0.4 0.1",
+        normal: "0 0 1",
+        points: ["Converts velocity into pressure", "Spiral shape (volute design)", "Determines hydraulic efficiency", "Must withstand internal pressure"]
+      },
+      {
+        id: 5,
+        part: "Impeller",
+        text: "Rotating element that imparts energy to the fluid. Accelerates the liquid outward using centrifugal force, increasing its velocity.",
+        position: "0.6 0.4 0",
+        normal: "0 0 1",
+        points: ["Core pumping element", "Generates flow and pressure", "Efficiency depends on blade design", "Subject to erosion and cavitation"]
+      },
+      {
+        id: 6,
+        part: "Inlet",
+        text: "Entry point where fluid enters the pump. Proper inlet conditions are essential to avoid cavitation and ensure stable operation.",
+        position: "0.73 0.4 0",
+        normal: "0 0 1",
+        points: ["Fluid enters at low pressure", "Sensitive to flow conditions", "Cavitation risk zone", "Affects pump performance"]
+      },
+      {
+        id: 7,
+        part: "Outlet",
+        text: "Discharge point where fluid exits at increased pressure. The outlet directs the flow into the pipeline system.",
+        position: "0.6 0.6 0",
+        normal: "0 0 1",
+        points: ["High-pressure output", "Connected to pipeline", "Determines system head", "Influences flow rate"]
+      },
+      {
+        id: 8,
+        part: "Base Frame",
+        text: "Provides structural support and maintains alignment between motor and pump. Reduces vibration and ensures stable operation.",
+        position: "0 0.1 0.2",
+        normal: "0 0 1",
+        points: ["Structural stability", "Vibration damping", "Alignment preservation", "Mounting surface"]
+      }
+
+     ]
+  },
+  {
+    id: "emitter",
+    name: "Emitter",
+    category: "Automation",
+    thumbnail: "images/emirret.png",
+    modelUrl: "models/nk_pump_v01.glb",
+    features: ["Annotations", "Theory", "Metrics", "Test after study"],
+    annotations: [
+      {
+        id: 1,
+        part: "Electric Motor",
+        text: "Converts electrical energy into mechanical rotational motion, driving the pump shaft. The motor determines the overall power, speed, and operational stability of the system.",
+        position: "-0.4 0.4 0.1",     
+        normal: "1 1 1",
+        points: ["Defines rotation speed (RPM)", "Main energy source of the system", "Requires cooling", "Efficiency directly affects energy consumption"]
+      },
+      {
+        id: 2,
+        part: "Shaft / Coupling Section",
+        text: "Transfers torque from the motor to the pump while compensating for slight misalignment. Ensures smooth rotation and reduces mechanical stress between components.",
+        position: "0 0.4 0.1",
+        normal: "0 0 1",
+        points: ["Torque transmission", "Alignment compensation", "Reduces vibration", "Critical for durability of bearings"]
+      },
+      {
+        id: 3,
+        part: "Bearing Housing / Support",
+        text: "Supports the rotating shaft and maintains precise alignment. Reduces friction and prevents excessive wear during continuous operation.",
+        position: "0 0.27 0",
+        normal: "0 0 1",
+        points: ["Maintains shaft stability", "Reduces friction losses", "Prevents vibration", "Extends equipment lifespan"]
+      },
+      {
+        id: 4,
+        part: "Pump Casing",
+        text: "Encloses the impeller and directs fluid flow. Converts kinetic energy from the rotating fluid into pressure through its volute geometry.",
+        position: "0.5 0.4 0.1",
+        normal: "0 0 1",
+        points: ["Converts velocity into pressure", "Spiral shape (volute design)", "Determines hydraulic efficiency", "Must withstand internal pressure"]
+      },
+      {
+        id: 5,
+        part: "Impeller",
+        text: "Rotating element that imparts energy to the fluid. Accelerates the liquid outward using centrifugal force, increasing its velocity.",
+        position: "0.6 0.4 0",
+        normal: "0 0 1",
+        points: ["Core pumping element", "Generates flow and pressure", "Efficiency depends on blade design", "Subject to erosion and cavitation"]
+      },
+      {
+        id: 6,
+        part: "Inlet",
+        text: "Entry point where fluid enters the pump. Proper inlet conditions are essential to avoid cavitation and ensure stable operation.",
+        position: "0.73 0.4 0",
+        normal: "0 0 1",
+        points: ["Fluid enters at low pressure", "Sensitive to flow conditions", "Cavitation risk zone", "Affects pump performance"]
+      },
+      {
+        id: 7,
+        part: "Outlet",
+        text: "Discharge point where fluid exits at increased pressure. The outlet directs the flow into the pipeline system.",
+        position: "0.6 0.6 0",
+        normal: "0 0 1",
+        points: ["High-pressure output", "Connected to pipeline", "Determines system head", "Influences flow rate"]
+      },
+      {
+        id: 8,
+        part: "Base Frame",
+        text: "Provides structural support and maintains alignment between motor and pump. Reduces vibration and ensures stable operation.",
+        position: "0 0.1 0.2",
+        normal: "0 0 1",
+        points: ["Structural stability", "Vibration damping", "Alignment preservation", "Mounting surface"]
+      }
+
+     ]
+  },
+  {
+    id: "water_oil_platform",
+    name: "Deepwater Horizon Oil Platform",
+    category: "Oil and gas",
+    thumbnail: "images/water_oli_platform.png",          
+    modelUrl: "models/oil_platform.glb",                
+    features: ["Annotations", "Theory"],
+    annotations: [
+      {
+        id: 1,
+        part: "Derrick / Drilling Tower",
+        text: "The drilling derrick is the primary structure used for drilling operations. It supports drilling equipment and enables vertical movement of the drill string during well construction and maintenance.",
+        position: "1.7 17 -1",     
+        normal: "0 1 0",
+        points: ["Supports drilling operations", "Allows vertical pipe handling", "Central element during well construction", "Designed for high mechanical loads"]
+      },
+      {
+        id: 2,
+        part: "Processing Module",
+        text: "Handles initial processing of extracted fluids, including separation of oil, gas, and water. Prepares raw production for transport or further treatment.",
+        position: "1.7 10 -1",
+        normal: "0 0 1",
+        points: ["Separates oil, gas, and water", "Stabilizes flow conditions", "Reduces pressure before transport", "Key for production efficiency"]
+      },
+      {
+        id: 3,
+        part: "Helipad",
+        text: "Provides access for personnel and light cargo transport. Critical for offshore logistics and emergency operations.",
+        position: "16 12 -6",
+        normal: "0 0 1",
+        points: ["Main access point for crew", "Used for emergency evacuation", "Supports offshore logistics", "Requires strict safety standards"]
+      },
+      {
+        id: 4,
+        part: "Flare Boom",
+        text: "Safely burns excess gas that cannot be processed or transported. Prevents pressure buildup and reduces environmental risk.",
+        position: "17 12 0",
+        normal: "0 0 1",
+        points: ["Burns excess hydrocarbons", "Prevents overpressure", "Safety-critical system", "Reduces explosion risk"]
+      },
+      {
+        id: 5,
+        part: "Platform Structure / Legs",
+        text: "Supports the entire offshore structure and transfers loads to the seabed. Must withstand waves, currents, and environmental forces.",
+        position: "-8 10 -1",
+        normal: "0 0 1",
+        points: ["Structural stability", "Load distribution", "Resistant to marine conditions", "Anchored to seabed"]
+      },
+      {
+        id: 6,
+        part: "Supply Vessel",
+        text: "Transports equipment, materials, and personnel to the platform. Essential for continuous operation and maintenance.",
+        position: "4 1.2 16",
+        normal: "0 0 1",
+        points: ["Delivers supplies and tools", "Supports maintenance operations", "Ensures operational continuity", "Can assist in emergencies"]
+      },
+      {
+        id: 7,
+        part: "Subsea Well / Wellhead",
+        text: "The subsea wellhead controls the extraction of hydrocarbons from the reservoir. It connects the reservoir to the surface facilities via a riser system.",
+        position: "1.7 -55 -1",
+        normal: "0 0 1",
+        points: ["Controls flow from reservoir", "Located on seabed", "Connected via riser", "Operates under high pressure"]
+      }
+    ]
+  }
+];
+
+let currentUser=null,savedModels=[],userRequests=[],currentCat="all",currentModel=null,sortAsc=true;
+
+function saveLS(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+function loadLS(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}
+
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const pg=document.getElementById('page-'+id);
+  if(pg) pg.classList.add('active');
+  if(id==='catalog') renderCatalog();
+  if(id==='profile'){if(!currentUser){showPage('login');return;}populateProfile();}
+  if(id==='request') renderReqHistory();
+}
+
+function switchAuthTab(tab){
+  document.getElementById('tab-login').classList.toggle('active',tab==='login');
+  document.getElementById('tab-signup').classList.toggle('active',tab==='signup');
+  document.getElementById('fs-login').classList.toggle('active',tab==='login');
+  document.getElementById('fs-signup').classList.toggle('active',tab==='signup');
+}
+
+function doLogin(){
+  const email=document.getElementById('li-email').value.trim();
+  const pw=document.getElementById('li-pw').value;
+  if(!email||!pw){alert('Please fill in email and password');return;}
+  const users=loadLS('e3d_users',[]);
+  const user=users.find(u=>u.email===email&&u.password===pw);
+  if(!user){alert('Invalid credentials. Try again or sign up.');return;}
+  currentUser=user;
+  savedModels=loadLS('e3d_saved_'+email,[]);
+  userRequests=loadLS('e3d_reqs_'+email,[]);
+  updateNavUser();showPage('profile');
+}
+
+function doRegister(){
+  const name=document.getElementById('su-name').value.trim();
+  const sname=document.getElementById('su-sname').value.trim();
+  const email=document.getElementById('su-email').value.trim();
+  const pw=document.getElementById('su-pw').value;
+  if(!name||!email||!pw){alert('Name, email and password are required');return;}
+  let users=loadLS('e3d_users',[]);
+  if(users.find(u=>u.email===email)){alert('Account already exists');return;}
+  users.push({name,surname:sname,email,password:pw,institution:document.getElementById('su-inst').value,speciality:document.getElementById('su-spec').value});
+  saveLS('e3d_users',users);
+  alert('Account created! Please log in.');
+  switchAuthTab('login');
+}
+
+function doLogout(){
+  currentUser=null;savedModels=[];userRequests=[];
+  document.getElementById('nav-user-area').innerHTML='<button class="btn btn-sm" onclick="showPage(\'login\')">Sign up</button>';
+  showPage('hello');
+}
+
+function updateNavUser(){
+  if(!currentUser) return;
+  const i=(currentUser.name[0]||'')+(currentUser.surname?currentUser.surname[0]:'');
+  document.getElementById('nav-user-area').innerHTML=`<div class="av-wrap" onclick="showPage('profile')"><div class="av">${i.toUpperCase()}</div><span>${currentUser.name}</span></div>`;
+}
+
+function liveSearch(){
+  const q=document.getElementById('nav-search').value;
+  if(q.length>1){showPage('catalog');document.getElementById('cat-search').value=q;renderCatalog();}
+}
+
+document.getElementById('cat-filters').addEventListener('click',e=>{
+  const btn=e.target.closest('.tag');if(!btn) return;
+  document.querySelectorAll('#cat-filters .tag').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');currentCat=btn.dataset.cat;renderCatalog();
+});
+
+function toggleSort(){sortAsc=!sortAsc;renderCatalog();}
+
+function renderCatalog() {
+  const q = (document.getElementById('cat-search').value || '').toLowerCase();
+  let list = [...MODELS_DB];
+
+  if (currentCat !== 'all') list = list.filter(m => m.category === currentCat);
+  if (q) list = list.filter(m => 
+    m.name.toLowerCase().includes(q) || 
+    m.category.toLowerCase().includes(q)
+  );
+
+  list.sort((a,b) => sortAsc ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name));
+
+  const grid = document.getElementById('catalog-grid');
+  grid.innerHTML = list.map(m => `
+    <div class="mc">
+      <div class="mc-img">
+        <img src="${m.thumbnail}" alt="${m.name}">
+        <button class="fav-btn" onclick="event.stopImmediatePropagation(); toggleSave('${m.id}', this)">
+          ${savedModels.includes(m.id) ? '❤️' : '🤍'}
+        </button>
+      </div>
+      <div class="mc-body">
+        <h3 style="font-size:1.05rem; margin-bottom:12px; color:#222;">${m.name}</h3>
+        <ul class="mc-feats">
+          ${m.features.map(f => `<li><span class="ck">✓</span>${f}</li>`).join('')}
+        </ul>
+        <div class="mc-foot">
+          <button class="btn btn-sm" onclick="openViewer('${m.id}')">View model</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleSave(id,btn){
+  if(!currentUser){showPage('login');return;}
+  if(savedModels.includes(id)) savedModels=savedModels.filter(x=>x!==id);
+  else savedModels.push(id);
+  saveLS('e3d_saved_'+currentUser.email,savedModels);
+  btn.textContent=savedModels.includes(id)?'❤️':'🤍';
+}
+
+function openViewer(id) {
+  const m = MODELS_DB.find(x => x.id === id);
+  if (!m) return;
+
+  currentModel = m;
+  
+  const mv = document.getElementById('mv');
+  mv.src = m.modelUrl;        
+  mv.alt = m.name;
+
+  
+  mv.querySelectorAll('button[slot^="hotspot"]').forEach(h => h.remove());
+
+  m.annotations.forEach(ann => {
+    const hotspot = document.createElement('button');
+    hotspot.slot = `hotspot-${ann.id}`;
+    hotspot.setAttribute('data-position', ann.position || "0 0 0");
+    hotspot.setAttribute('data-normal', ann.normal || "0 1 0");
+    hotspot.style.backgroundColor = 'rgba(232, 54, 93, 0.9)';
+    hotspot.style.border = '3px solid white';
+    hotspot.style.borderRadius = '50%';
+    hotspot.style.width = '24px';
+    hotspot.style.height = '24px';
+    hotspot.style.cursor = 'pointer';
+    
+    hotspot.innerHTML = `<span style="color:white;font-weight:bold;font-size:13px;">${ann.id}</span>`;
+    
+    hotspot.onclick = () => selectAnn(ann.id);
+    mv.appendChild(hotspot);
+  });
+
+  buildAnnTabs(m);
+  showAnn(m.annotations[0]);
+  showPage('viewer');
+}
+
+function buildAnnTabs(m){
+  document.getElementById('ann-tabs').innerHTML=m.annotations.map((a,i)=>`
+    <button class="ann-tab ${i===0?'active':''}" onclick="selectAnn(${a.id})">${a.id}. ${a.part}</button>`).join('');
+}
+
+function selectAnn(id){
+  const a=currentModel.annotations.find(x=>x.id===id);if(!a) return;
+  document.querySelectorAll('.ann-tab').forEach((t,i)=>t.classList.toggle('active',currentModel.annotations[i].id===id));
+  showAnn(a);
+}
+
+function showAnn(a){
+  document.getElementById('ann-num').textContent=a.id;
+  document.getElementById('ann-text').textContent=a.text;
+  const kpLabel=document.getElementById('ann-kp-label');
+  const kpList=document.getElementById('ann-kp-list');
+  if(a.points&&a.points.length){kpLabel.style.display='';kpList.innerHTML=a.points.map(p=>`<li>${p}</li>`).join('');}
+  else{kpLabel.style.display='none';kpList.innerHTML='';}
+}
+
+function mvZoom(delta){
+  const mv=document.getElementById('mv');
+  try{const o=mv.getCameraOrbit();mv.cameraOrbit=`${o.theta}rad ${o.phi}rad ${Math.max(0.5,o.radius+delta)}m`;}catch(e){}
+}
+function mvReset(){document.getElementById('mv').cameraOrbit='auto auto auto';}
+
+function populateProfile(){
+  if(!currentUser) return;
+  const i=(currentUser.name[0]||'')+(currentUser.surname?currentUser.surname[0]:'');
+  document.getElementById('p-av-icon').textContent=i.toUpperCase()||'?';
+  document.getElementById('p-sidebar-name').textContent=(currentUser.name+' '+(currentUser.surname||'')).trim();
+  document.getElementById('p-sidebar-email').textContent=currentUser.email;
+  document.getElementById('pi-name').value=currentUser.name||'';
+  document.getElementById('pi-sname').value=currentUser.surname||'';
+  document.getElementById('pi-email').value=currentUser.email||'';
+  document.getElementById('pi-inst').value=currentUser.institution||'';
+  document.getElementById('pi-spec').value=currentUser.speciality||'';
+  renderSaved();renderProfileReqs();
+}
+
+function switchProfileTab(tab,btn){
+  document.querySelectorAll('.p-nav-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.p-section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('ps-'+tab).classList.add('active');
+  if(tab==='saved') renderSaved();
+  if(tab==='requests') renderProfileReqs();
+}
+
+function saveProfileInfo(){
+  if(!currentUser) return;
+  currentUser.name=document.getElementById('pi-name').value;
+  currentUser.surname=document.getElementById('pi-sname').value;
+  currentUser.institution=document.getElementById('pi-inst').value;
+  currentUser.speciality=document.getElementById('pi-spec').value;
+  let users=loadLS('e3d_users',[]);
+  const idx=users.findIndex(u=>u.email===currentUser.email);
+  if(idx>=0) users[idx]=currentUser;
+  saveLS('e3d_users',users);updateNavUser();populateProfile();alert('Changes saved!');
+}
+
+function renderSaved(){
+  const g=document.getElementById('saved-grid');
+  const list=MODELS_DB.filter(m=>savedModels.includes(m.id));
+  if(!list.length){g.innerHTML='<p style="color:var(--muted);font-size:.88rem">No saved models yet. Heart a model in the catalog!</p>';return;}
+  g.innerHTML=list.map(m=>`
+    <div class="mc" style="cursor:pointer" onclick="openViewer('${m.id}')">
+      <div class="mc-img" style="height:130px"><span style="font-size:2.8rem">${m.emoji}</span></div>
+      <div class="mc-body"><p style="font-size:.85rem;color:#333;font-weight:600">${m.name}</p><p style="font-size:.75rem;color:#777">${m.category}</p></div>
+    </div>`).join('');
+}
+
+function renderProfileReqs(){
+  const div=document.getElementById('profile-reqs');
+  if(!userRequests.length){div.innerHTML='<p style="color:var(--muted);font-size:.88rem">No requests yet.</p>';return;}
+  div.innerHTML=userRequests.map(r=>`
+    <div class="req-item">
+      <div style="flex:1"><p style="font-weight:600;font-size:.9rem">${r.name}</p><p style="font-size:.78rem;color:var(--muted);margin-top:3px">${r.category} · ${r.date}</p></div>
+      <span class="req-status ${r.status==='Done'?'done':'pending'}">${r.status}</span>
+    </div>`).join('');
+}
+
+function showFiles(input){
+  document.getElementById('file-names').textContent=Array.from(input.files).map(f=>f.name).join(', ');
+}
+
+function submitRequest(){
+  if(!currentUser){alert('Please log in');showPage('login');return;}
+  const name=document.getElementById('rq-name').value.trim();
+  const desc=document.getElementById('rq-desc').value.trim();
+  if(!name||!desc){alert('Please fill in model name and description');return;}
+  const req={name,desc,category:document.getElementById('rq-cat').value,status:'Pending',date:new Date().toLocaleDateString()};
+  userRequests.push(req);
+  saveLS('e3d_reqs_'+currentUser.email,userRequests);
+  alert('Request sent! Our team will review it soon.');
+  document.getElementById('rq-name').value='';
+  document.getElementById('rq-desc').value='';
+  document.getElementById('file-names').textContent='';
+  renderReqHistory();
+}
+
+function renderReqHistory(){
+  const div=document.getElementById('req-history-list');
+  if(!currentUser||!userRequests.length){div.innerHTML='<p style="color:var(--muted);font-size:.88rem">No requests yet.</p>';return;}
+  div.innerHTML=userRequests.map(r=>`
+    <div class="req-item">
+      <div style="flex:1">
+        <p style="font-weight:600;font-size:.9rem">${r.name}</p>
+        <p style="font-size:.78rem;color:var(--muted);margin-top:3px">${r.category} · ${r.date}</p>
+        <p style="font-size:.8rem;color:rgba(255,255,255,.45);margin-top:2px">${r.desc.slice(0,80)}${r.desc.length>80?'…':''}</p>
+      </div>
+      <span class="req-status ${r.status==='Done'?'done':'pending'}">${r.status}</span>
+    </div>`).join('');
+}
+function showSupFiles(input){
+  const names=Array.from(input.files).map(f=>f.name).join(', ');
+  document.getElementById('sup-file-names').textContent=names||'';
+}
+ 
+let supportTickets=[];
+try{supportTickets=JSON.parse(localStorage.getItem('e3d_tickets')||'[]')}catch(e){supportTickets=[];}
+ 
+function submitSupport(){
+  const name=document.getElementById('sup-name').value.trim();
+  const email=document.getElementById('sup-email').value.trim();
+  const desc=document.getElementById('sup-desc').value.trim();
+  if(!name||!email||!desc){alert('Please fill in name, email and description');return;}
+  const ticket={name,email,type:document.getElementById('sup-type').value,desc,status:'Open',date:new Date().toLocaleDateString()};
+  supportTickets.push(ticket);
+  try{localStorage.setItem('e3d_tickets',JSON.stringify(supportTickets))}catch(e){}
+  alert('Your message has been sent! We will get back to you at '+email);
+  document.getElementById('sup-name').value='';
+  document.getElementById('sup-email').value='';
+  document.getElementById('sup-desc').value='';
+  document.getElementById('sup-file-names').textContent='';
+  renderTickets();
+}
+ 
+function renderTickets(){
+  const div=document.getElementById('sup-tickets-list');
+  if(!div) return;
+  if(!supportTickets.length){div.innerHTML='<p style="color:var(--muted);font-size:.88rem">No submitted tickets yet.</p>';return;}
+  div.innerHTML=supportTickets.map(t=>`
+    <div class="req-item" style="margin-bottom:10px">
+      <div style="flex:1">
+        <p style="font-weight:600;font-size:.88rem">${t.type}</p>
+        <p style="font-size:.78rem;color:var(--muted);margin-top:2px">${t.date} · ${t.email}</p>
+        <p style="font-size:.8rem;color:rgba(255,255,255,.5);margin-top:2px">${t.desc.slice(0,60)}${t.desc.length>60?'…':''}</p>
+      </div>
+      <span class="req-status pending">${t.status}</span>
+    </div>`).join('');
+}
+
+// ─── AI ASSISTANT ───────────────────────────────────────────
+(function(){
+  const toggle = document.getElementById('aiToggle');
+  const win    = document.getElementById('aiWindow');
+  const close  = document.getElementById('aiClose');
+  const msgs   = document.getElementById('aiMsgs');
+  const input  = document.getElementById('aiInput');
+  const send   = document.getElementById('aiSend');
+  const quick  = document.getElementById('aiQuick');
+ 
+  let isOpen    = false;
+  let isLoading = false;
+  // Conversation history sent to Claude each time (keeps context)
+  let history   = [];
+ 
+  // Build a system prompt that knows about the site
+  function buildSystemPrompt(){
+    const modelList = (typeof MODELS_DB !== 'undefined')
+      ? MODELS_DB.map(m => `- ${m.name} (${m.category}): ${m.annotations.map(a=>a.part).join(', ')}`).join('\n')
+      : 'models not loaded';
+ 
+    const page = document.querySelector('.page.active')?.id?.replace('page-','') || 'unknown';
+    const model = (typeof currentModel !== 'undefined' && currentModel)
+      ? `Currently viewing model: "${currentModel.name}" (${currentModel.category}). Annotations: ${currentModel.annotations.map(a=>a.part+' — '+a.text).join(' | ')}`
+      : 'No model open right now.';
+    const user = (typeof currentUser !== 'undefined' && currentUser)
+      ? `Logged-in user: ${currentUser.name} ${currentUser.surname||''}, ${currentUser.institution||''}`
+      : 'User is not logged in.';
+ 
+    return `You are an intelligent AI assistant embedded in Engine 3D — an educational web platform for interactive 3D visualization of industrial and scientific equipment.
+ 
+PLATFORM CONTEXT:
+- Current page: ${page}
+- ${model}
+- ${user}
+ 
+AVAILABLE MODELS ON THE PLATFORM:
+${modelList}
+ 
+YOUR ROLE:
+- Answer questions about 3D models, industrial equipment, engineering concepts
+- Explain technical terms, components, and their functions clearly
+- If the user asks about a specific part or annotation, give a thorough educational explanation
+- Help navigate the platform (catalog, viewer, requests, profile, support)
+- You can answer general engineering/science questions even if not directly about a model
+- Be concise but informative. Use bullet points for lists. No markdown headers with #.
+- Platform contacts: email 3dengine@gmail.com, phone +7 771 380 23 23, office Tole bi 59 Almaty
+- Keep responses focused and not too long (max ~200 words unless asked for detail)`;
+  }
+ 
+  // ── Toggle open/close ──
+  toggle.addEventListener('click', () => {
+    isOpen = !isOpen;
+    win.classList.toggle('open', isOpen);
+    if(isOpen) input.focus();
+  });
+  close.addEventListener('click', () => {
+    isOpen = false;
+    win.classList.remove('open');
+  });
+ 
+  // ── Quick buttons ──
+  quick.addEventListener('click', e => {
+    const btn = e.target.closest('.ai-quick-btn');
+    if(!btn) return;
+    input.value = btn.dataset.q;
+    sendMessage();
+  });
+ 
+  // ── Send on Enter ──
+  input.addEventListener('keydown', e => {
+    if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); }
+  });
+  send.addEventListener('click', sendMessage);
+ 
+  // ── Add a message bubble ──
+  function addMsg(text, role){
+    const div = document.createElement('div');
+    div.className = 'ai-msg ' + (role==='user' ? 'user' : 'bot');
+    div.innerHTML = `<div class="ai-msg-av">${role==='user'?'👤':'🤖'}</div>
+      <div class="ai-msg-bubble">${formatText(text)}</div>`;
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+ 
+  // ── Typing indicator ──
+  let typingEl = null;
+  function showTyping(){
+    typingEl = document.createElement('div');
+    typingEl.className = 'ai-msg bot';
+    typingEl.id = 'aiTyping';
+    typingEl.innerHTML = '<div class="ai-msg-av">🤖</div><div class="ai-msg-bubble"><div class="ai-typing"><span></span><span></span><span></span></div></div>';
+    msgs.appendChild(typingEl);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+  function hideTyping(){
+    const el = document.getElementById('aiTyping');
+    if(el) el.remove();
+  }
+ 
+  // ── Format response text ──
+  function formatText(t){
+    return t
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g,'<em>$1</em>')
+      .replace(/`(.*?)`/g,'<code style="background:rgba(0,0,0,.35);padding:1px 5px;border-radius:3px;font-size:.82em">$1</code>')
+      .replace(/\n/g,'<br>');
+  }
+ 
+  // ── Main send function ──
+  async function sendMessage(){
+    const text = input.value.trim();
+    if(!text || isLoading) return;
+ 
+    input.value = '';
+    isLoading = true;
+    send.disabled = true;
+ 
+    addMsg(text, 'user');
+    history.push({ role:'user', content: text });
+ 
+    showTyping();
+ 
+    try {
+      const resp = await fetch('AIzaSyAq_y9IWy4g3aalPzME7u1KN32tZ6z0xFE', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          system: buildSystemPrompt(),
+          messages: history.slice(-12) // last 12 turns for context window
+        })
+      });
+ 
+      const data = await resp.json();
+      hideTyping();
+ 
+      const reply = data?.content?.[0]?.text || "Sorry, I couldn't get a response. Please try again.";
+      addMsg(reply, 'bot');
+      history.push({ role:'assistant', content: reply });
+ 
+      // keep history from growing too large
+      if(history.length > 30) history = history.slice(-20);
+ 
+    } catch(err) {
+      hideTyping();
+      addMsg("Connection error. Please check your internet and try again.", 'bot');
+      history.pop(); // remove the failed user message
+    }
+ 
+    isLoading = false;
+    send.disabled = false;
+    input.focus();
+  }
+})();
+
+showPage('hello');
+</script>
+</body>
+</html>
